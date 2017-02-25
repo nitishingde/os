@@ -1,0 +1,50 @@
+1.PRINT :                               
+Hello World!                            
+
+
+2.CONCATENATION OF STRINGS :            
+BEAN                                    
+BAG                                     
+CHAIR                                   
+BEANBAG CHAIR                           
+
+
+3.COMPARISON :                          
+HELLO                                   
+WORLD                                   
+NOT SAME                                
+
+
+4.PYRAMID PATTERN :                     
+        *                               
+    *   *   *                           
+*   *   *   *   *                       
+
+
+5.PALINDROME                            
+SHE RACED A CAR.                        
+RACECAR.                                
+
+
+6.COUNTDOWN :                           
+5 POTATOS                               
+FRYING IN THE PAN ..!                   
+4 POTATOS                               
+FRYING IN THE PAN ..!                   
+3 POTATOS                               
+FRYING IN THE PAN ..!                   
+2 POTATOS                               
+FRYING IN THE PAN ..!                   
+1 POTATOS                               
+FRYING IN THE PAN ..!                   
+NOTHING REMAINED, SO I ATE ONLY PAV.    
+
+
+7.DAIMOND PATTERN :                     
+        *                               
+    *   *   *                           
+*   *   *   *   *                       
+    *   *   *                           
+        *                               
+
+
