@@ -1,0 +1,345 @@
+import random
+#from phase1.os_packages.PCB import PCB
+class PCB:
+	
+	JOB_ID, TTL, TLL = -1, -1, -1
+	TTC, TLC = 0, 0
+	
+	def __init__(self):
+		JOB_ID, TTL, TLL = -1, -1, -1
+		TTC, TLC = 0, 0
+
+	def PCBin(self, bu):
+		buf = ''.join(bu)
+		self.JOB_ID = int(buf[4:8])
+		self.TTL = int(buf[8:12])
+		self.TLL = int(buf[12:])
+	
+	def disp_job_details(self):
+		print( "JOB ID              : {}\nTotal Time Limit    : {}\n\
+Total Line Limit    : {}".format(self.JOB_ID,self.TTL,self.TLL))
+		print("TTC :{}\nTLC :{}\n".format(self.TTC,self.TLC)) 
+
+fp = open('inp.txt','r')
+ff = iter(fp.read().split('\n'))
+fp.close()
+op = open('op.txt','w')
+
+
+class phase2():
+	
+	#initialization
+	def __init__(self):
+		#Memory
+		self.M = ['    ' for i in range(300)]
+		#Register
+		self.R = [' ' for i in range(4)]
+		#Instruction Register
+		self.IR = [' ' for i in range(4)]
+		#Instruction Counter
+		self.IC = 0
+		#Toggle
+		self.C = False
+		#Buffer
+		self.buffer =[' ' for i in range(40)]
+		#Page Table Register
+		self.PTR = -1
+		#Addresses
+		self.RA = 0
+		#Memory Check Counter
+		self.is_empty = [True for i in range(30)]
+		#Interrupts
+		self.SI, self.PI, self.TI = 0, 0, 0
+		#Buffer
+		self.buffer =[' ' for i in range(40)]
+		#PCB
+		self.pcb = PCB()
+
+	#reset parameters
+	def flush(self):
+		self.__init__()
+
+
+	#paging
+	def INITIALIZE_PAGE_TABLE(self):
+		self.PTR = 10*random.randint(0,29)
+		for i in range(self.PTR,self.PTR+10):
+			self.M[i] = '0 **'
+	
+	def ALLOCATE(self):
+		while True:
+			m = random.randint(0,29)
+			if self.is_empty[m]==True:
+				self.is_empty[m] = False
+				for addr in range(self.PTR,self.PTR+10):
+					if self.M[addr] == '0 **':
+						self.M[addr] = '1 ' + str(m) if m >= 10 else '1 0' + str(m)
+						return 10*m
+
+	def ALLOCATE_(self,addr):
+		while True:
+			m = random.randint(0,29)
+			if self.is_empty[m]==True:
+				self.is_empty[m] = False
+				self.M[addr] = '1 ' + str(m) if m >= 10 else '1 0' + str(m)
+				return 10*m
+
+	def ADDRESS_MAP(self,VA):
+		if 0 <= VA and VA <= 99:
+			add = int(self.PTR + VA/10);
+			if self.M[add] == '0 **':
+				self.PI = 3
+				self.SI = 0
+			else:
+				self.RA = int(self.M[add][2:])*10 + VA%10
+				print("RA :{}\n".format(self.RA))
+		else:
+			if 'H' in self.IR:
+				self.SI = 3
+				self.MOS()
+	#buffer
+	#loads buffer(40B) and returns the remaining line
+	def load_buffer(self,line):
+		self.buffer = line[:40]
+		self.buffer.strip('\n')		
+		line = line[40:]
+		return line
+
+	def setm(self,m,strng):
+		self.M[m] = strng
+	
+	def dispm(self,m):
+		for i in range(int(m/4)):
+			for j in range(4):
+				print ("M[{:>3}] : {}".format(4*i+j,self.M[4*i+j]),"  ",end="")
+			print()
+		print()	
+	
+	
+	#execution
+	def MOS(self):
+		
+		if self.TI == 0:
+			if self.SI > 0:
+				if self.SI == 1:
+					self.READ()
+				elif self.SI == 2:
+					self.WRITE()
+				elif self.SI == 3:
+					self.TERMINATE(0)
+			
+			if self.PI > 0:
+				if self.PI == 1:
+					self.TERMINATE(4)
+				elif self.PI == 2:
+					self.TERMINATE(5)
+				elif self.PI == 3:
+					if 'GD' or 'LR' in self.IR:
+						self.RA = self.ALLOCATE_( int(self.PTR + int(int(self.IR[2:])/10)) )
+						self.IC = self.IC - 1
+					else:
+						self.TERMINATE(6)
+
+		elif self.TI == 2:
+			if self.SI > 0:
+				if self.SI == 1:
+					self.TERMINATE(3)
+				elif self.SI == 2:
+					self.TERMINATE(3)
+				elif self.SI == 3:
+					self.TERMINATE(0)
+
+			if self.PI > 0:
+
+				if self.PI == 1:
+					self.TERMINATE(4)
+				elif self.PI == 2:
+					self.TERMINATE(5)
+				#elif self.PI == 3:
+				self.TERMINATE(3)
+
+	def READ(self):
+		if '$END' in self.buffer:
+			self.TERMINATE(1)
+		self.buffer = next(ff)
+		if '$END' in self.buffer:
+			self.TERMINATE(1)
+		self.pcb.TTC = self.pcb.TTC + 2
+		self.buffer = self.buffer[:40]
+		for i in range(0,40-len(self.buffer)):
+			self.buffer = self.buffer + ' '		
+		for i in range(0,10):
+			self.M[self.RA + i] = self.buffer[4*i : 4*i + 4]
+		#self.dispm(300)
+
+	def WRITE(self):
+		self.pcb.TTC = self.pcb.TTC + 1
+		if self.pcb.TLC <= self.pcb.TLL:
+			#with open("op.txt","a") as op:
+			for i in range(10):
+				#print("to write {}".format(self.M[indx]))			
+				op.write(self.M[self.RA+i])
+			op.write('\n')
+		
+		else:
+			self.TERMINATE(2)
+
+
+	#def TERMINATE(self):
+		#with open("op.txt","a") as op:
+	#	op.write('\n\n')
+
+	def EXECUTE_USER_PROGRAM(self):
+		while True:
+			self.SI, self.PI, self.TI = 0, 0, 0
+			self.ADDRESS_MAP(self.IC)
+			self.IR = self.M[self.RA]
+			self.IC = self.IC + 1
+			self.ADDRESS_MAP(int(self.IR[2:]))
+			print("IR :{}".format(self.IR))
+			if self.IR[2:].isdecimal() and 'H' not in self.IR:
+				
+				self.TI = 0 if self.pcb.TTC <= self.pcb.TTL else 2
+
+				if self.IR[:2] == "LR":
+					if self.PI == 0 and self.TI == 0:
+						self.pcb.TTC = self.pcb.TTC + 1
+						self.R = self.M[self.RA]
+					else:
+						self.MOS()
+
+				elif self.IR[:2] == "SR":
+					if self.PI == 0 and self.TI == 0:
+						self.pcb.TTC = self.pcb.TTC + 1
+						self.M[self.RA] = self.R
+					else:
+						self.MOS()
+
+				elif self.IR[:2] == "CR":
+					if self.PI == 0 and self.TI == 0:
+						self.pcb.TTC = self.pcb.TTC + 1
+						self.C = True if self.R == self.M[self.RA] else False
+					else:
+						self.MOS()
+
+				elif self.IR[:2] == "BT":
+					if self.PI == 0 and self.TI == 0:
+						self.pcb.TTC = self.pcb.TTC + 1	
+						self.IC = self.RA if self.C == True else self.IC
+					else:
+						self.MOS()
+
+				elif self.IR[:2] == "GD":
+					self.SI = 1 if self.PI == 0 else 0 
+					self.MOS()
+
+				elif self.IR[:2] == "PD":				
+					self.SI = 2
+					self.MOS()				
+
+				else:
+					self.PI = 1
+					self.MOS()				
+			
+			elif 'H' in self.IR:
+					self.SI=3
+					self.MOS()
+					break
+			else:
+				self.PI = 2
+				self.MOS()
+		
+	def START_EXECUTION(self):
+		self.IC = 0
+		self.EXECUTE_USER_PROGRAM()
+
+	def TERMINATE(self, EM):
+
+		if EM == 0: 
+			print ("No error.")
+			op.write('\n\n')
+	
+		elif EM == 1:
+			print("Out of data.")
+				 
+		elif EM == 2:
+			print("Line limit exceeded.")
+				 
+		elif EM == 3:
+			print("Time limit exceeded.")
+			
+		elif EM == 4:
+			print("Operation code error.")
+			
+		elif EM == 5:
+			print("Operand error.")
+			
+		elif EM == 6:
+			print("Invalid page fault.")
+
+		
+	def LOAD(self):
+		prgm = False
+		self.flush()
+		for line in ff:
+			while len(line) != 0:
+				#loads buffer(40B) and returns the remaining to the line
+				line = self.load_buffer(line)
+				#print (self.buffer)
+				
+				if self.buffer.startswith("$AMJ"):					
+					self.pcb.PCBin(self.buffer)
+					self.pcb.disp_job_details()
+					#print (self.buffer)										
+					self.INITIALIZE_PAGE_TABLE()
+					print ("PTR :{}".format(self.PTR))					
+					prgm = True
+					continue
+
+				elif self.buffer.startswith("$DTA"):
+					self.dispm(300)
+					prgm = False
+					self.START_EXECUTION()				
+					#self.START_EXECUTION()
+					#print("Memory After Execution :")
+					self.dispm(300)
+					#print()
+
+				elif self.buffer.startswith("$END"):					
+					self.flush()
+
+				if prgm:
+					#Program Card is Loaded
+					print("Program to be loaded : ",end="")
+					while True:
+						i = 0
+						print(self.buffer,end="")
+						m = self.ALLOCATE()
+						while i < len(self.buffer):
+							if i < len(self.buffer):
+								if 'H' in self.buffer[i:i+4]:
+									self.setm(m,"H   ")
+									i = i - 3
+								else:
+									self.setm(m,self.buffer[i:i+4])
+								#self.dispm(m)								
+							
+							else:
+								self.setm(m,"    ")
+							m = m + 1
+							i = i + 4
+
+						if len(line) == 0:
+							print()
+							#self.dispm(m)
+							break
+
+						line = self.read(line)
+
+
+if __name__ == '__main__':
+	ph = phase2()
+	ph.LOAD()
+	op.close()
+else:
+	print('{} imported as module'.format(__name__))

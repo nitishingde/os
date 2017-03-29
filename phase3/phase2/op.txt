@@ -1,0 +1,101 @@
+Welcome VIT                             
+No error.
+
+IR : H   
+IC : 3
+JOB ID              : 1
+Total Time Limit    : 4
+Total Line Limit    : 1
+
+Time and Line counts :
+TTC :4/4
+TLC :1/1
+--------------------------------------------------
+
+
+Out of data.
+
+IR : GD40
+IC : 1
+JOB ID              : 2
+Total Time Limit    : 4
+Total Line Limit    : 1
+
+Time and Line counts :
+TTC :2/4
+TLC :0/1
+--------------------------------------------------
+
+
+Line limit exceeded.
+
+IR : PD40
+IC : 2
+JOB ID              : 3
+Total Time Limit    : 5
+Total Line Limit    : 0
+
+Time and Line counts :
+TTC :3/5
+TLC :1/0
+--------------------------------------------------
+
+
+Time limit exceeded.
+
+IR : GD40
+IC : 1
+JOB ID              : 4
+Total Time Limit    : 1
+Total Line Limit    : 1
+
+Time and Line counts :
+TTC :2/1
+TLC :0/1
+--------------------------------------------------
+
+
+Operation code error.
+
+IR : GT20
+IC : 1
+JOB ID              : 5
+Total Time Limit    : 4
+Total Line Limit    : 1
+
+Time and Line counts :
+TTC :0/4
+TLC :0/1
+--------------------------------------------------
+
+
+Operand error.
+
+IR : GDAB
+IC : 1
+JOB ID              : 6
+Total Time Limit    : 4
+Total Line Limit    : 1
+
+Time and Line counts :
+TTC :1/4
+TLC :0/1
+--------------------------------------------------
+
+
+Invalid page fault.
+
+IR : PD90
+IC : 2
+JOB ID              : 7
+Total Time Limit    : 4
+Total Line Limit    : 1
+
+Time and Line counts :
+TTC :2/4
+TLC :0/1
+--------------------------------------------------
+
+
+        *                               
+    *   *   *                           
