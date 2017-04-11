@@ -1,5 +1,4 @@
 import random
-#from phase1.phase1 import phase1
 from phase1.os_packages.PCB import PCB
 
 class phase2():
@@ -27,13 +26,18 @@ class phase2():
 		#Interrupts
 		self.SI, self.PI, self.TI = 0, 0, 0
 		#Buffer
-		self.buffer =[' ' for i in range(40)]
+		self.buffer = [' ' for i in range(40)]
 		#PCB
 		self.pcb = PCB()
+		#flag
+		self.no_error = True
+		self.vpf = False
 
 	#reset parameters
 	def flush(self):
 		self.__init__()
+		self.pcb.__init__()
+
 
 	#paging
 	def INITIALIZE_PAGE_TABLE(self):
@@ -94,7 +98,8 @@ class phase2():
 		self.buffer.strip('\n')
 		line = line[40:]
 		return line
-		
+
+
 	#execution
 	def MOS(self):
 
@@ -106,19 +111,23 @@ class phase2():
 					self.WRITE()
 				elif self.SI == 3:
 					self.TERMINATE(0)
+					self.no_error = False
 
 			if self.PI > 0:
 				if self.PI == 1:
 					self.TERMINATE(4)
+					self.no_error = False
 				elif self.PI == 2:
 					self.TERMINATE(5)
+					self.no_error = False
 				elif self.PI == 3:
-					if self.SI == 1:#self.IR.find('GD') != -1 or self.IR.find('SR') != -1:
+					if self.vpf:#self.IR.find('GD') != -1 or self.IR.find('SR') != -1:
 						self.RA = self.ALLOCATE( int(self.PTR + int(int(self.IR[2:])/10)) )
 						self.IC = self.IC - 1
-						self.SIMULATION()
+						self.vpf = False
 					else:
 						self.TERMINATE(6)
+						self.no_error = False
 					self.PI = 0
 
 		elif self.TI == 2:
@@ -129,6 +138,7 @@ class phase2():
 					self.TERMINATE(3)
 				elif self.SI == 3:
 					self.TERMINATE(0)
+				self.no_error = False
 
 			if self.PI > 0:
 
@@ -139,6 +149,7 @@ class phase2():
 				elif self.PI == 3:
 					self.PI = 0
 				self.TERMINATE(3)
+				self.no_error = False
 
 		#self.SI, self.PI, self.TI = 0, 0, 0
 
@@ -146,12 +157,15 @@ class phase2():
 		if '$END' in self.buffer:
 			self.TERMINATE(1)
 			self.TI = 2
+			self.no_error = False
 			return
 		self.buffer = next(ff)
 		if '$END' in self.buffer:
 			self.TERMINATE(1)
 			self.TI = 2
+			self.no_error = False
 			return
+		self.SIMULATION()
 		#self.pcb.TTC = self.pcb.TTC + 2
 		self.buffer = self.buffer[:40]
 		for i in range(0,40-len(self.buffer)):
@@ -161,9 +175,9 @@ class phase2():
 		#self.dispm(300)
 
 	def WRITE(self):
-		self.SIMULATION()
-		self.pcb.TLC = self.pcb.TLC + 1
-		if self.pcb.TLC <= self.pcb.TLL:
+		self.pcb.LLC = self.pcb.LLC + 1
+		if self.pcb.LLC <= self.pcb.TLL:
+			self.SIMULATION()
 			#with open("op.txt","a") as op:
 			for i in range(10):
 				#print("to write {}".format(self.M[indx]))
@@ -172,12 +186,12 @@ class phase2():
 
 		else:
 			self.TERMINATE(2)
+			self.no_error = False
 
 	def EXECUTE_USER_PROGRAM(self):
 		self.SI, self.PI, self.TI = 0, 0, 0
 		print("Instructions :")
-		while True:
-			#	break
+		while self.no_error:
 			self.ADDRESS_MAP(str(self.IC))
 			#print ("DBG2 {}".format(self.RA))
 			self.IR = self.M[self.RA]
@@ -188,9 +202,9 @@ class phase2():
 			#print("RA :{}".format(self.RA))
 
 			if self.IR[:2] == "LR":
-				self.SIMULATION()
 				if self.PI == 0 and self.TI == 0:
 					#self.pcb.TTC = self.pcb.TTC + 1
+					self.SIMULATION()
 					self.R = self.M[self.RA]
 					#print ("Reg :{}".format(self.R))
 				else:
@@ -204,13 +218,13 @@ class phase2():
 					self.M[self.RA] = self.R
 					#print ("RA :{} MEM : {}".format(self.RA,self.M[self.RA]))
 				else:
-					self.SI = 1
+					self.vpf = True
 					self.MOS()
 					self.SI = self.PI = 0
 
 			elif self.IR[:2] == "CR":
-				self.SIMULATION()
 				if self.PI == 0 and self.TI == 0:
+					self.SIMULATION()
 					#self.pcb.TTC = self.pcb.TTC + 1
 					#print("C before:{}".format(self.C))
 					self.C = True if self.R == self.M[self.RA] else False
@@ -220,8 +234,8 @@ class phase2():
 					self.SI = self.PI = 0
 
 			elif self.IR[:2] == "BT":
-				self.SIMULATION()
 				if self.PI == 0 and self.TI == 0:
+					self.SIMULATION()
 					#self.pcb.TTC = self.pcb.TTC + 1
 					#print ("BT before {}".format(self.IC))
 					self.IC = int(self.IR[2:]) if self.C == True else self.IC
@@ -232,11 +246,16 @@ class phase2():
 
 			elif self.IR[:2] == "GD":
 				#self.SIMULATION()
+				self.SI = 1
 				if self.PI != 3:
+					self.MOS()
+					self.SI = self.PI = 0
+				#if self.PI == 0 else 0
+				else:
 					self.SIMULATION()
-				self.SI = 1#if self.PI == 0 else 0
-				self.MOS()
-				self.SI = self.PI = 0
+					self.vpf = True
+					self.MOS()
+					self.SI = self.PI = 0
 
 
 			elif self.IR[:2] == "PD":
@@ -253,9 +272,6 @@ class phase2():
 				self.PI = 1
 				self.MOS()
 				self.SI = self.PI = 0
-
-			if self.TI == 2:
-				break
 
 		self.pcb.disp_limits()
 		self.dispm(300)
@@ -299,10 +315,11 @@ class phase2():
 			print("Invalid page fault.")
 			op.write("Invalid page fault.\n\n")
 
-		op.write("IR : {}\nIC : {}\n".format(self.IR,self.IC))
+		if(EM != 0):
+			op.write("IR : {}\nIC : {}\n".format(self.IR,self.IC))
 		op.write( "JOB ID              : {}\nTotal Time Limit    : {}\nTotal Line Limit    : {}".format(self.pcb.JOB_ID,self.pcb.TTL,self.pcb.TLL))
-		#op.write("\nTTC :{}\nTLC :{}\n".format(self.pcb.TTC,self.pcb.TLC))
-		op.write("\n\nTime and Line counts :\nTTC :{}/{}\nTLC :{}/{}\n".format(self.pcb.TTC,self.pcb.TTL,self.pcb.TLC,self.pcb.TLL))
+		#op.write("\nTTC :{}\nLLC :{}\n".format(self.pcb.TTC,self.pcb.LLC))
+		op.write("\n\nTime and Line counts :\nTTC :{}/{}\nLLC :{}/{}\n".format(self.pcb.TTC,self.pcb.TTL,self.pcb.LLC,self.pcb.TLL))
 		op.write("--------------------------------------------------\n\n\n")
 
 		self.TI = 2

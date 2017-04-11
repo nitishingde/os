@@ -81,7 +81,7 @@ class phase3():
 			m = random.randint(0,29)
 			if self.is_empty[m]==True:
 				self.is_empty[m] = False
-				self.M[addr] = str(self.LQ[0].JOB_ID) + ' ' + str(m) if m >= 10 else str(self.LQ[0].JOB_ID)+' 0' + str(m)
+				self.M[addr] = str(self.LQ[0].JOB_ID) + ' ' + str(m) if m >= 10 else tr(self.LQ[0].JOB_ID)+' 0' + str(m)
 				return 10*m
 
 	def ADDRESS_MAP(self,VA):
@@ -340,7 +340,7 @@ if __name__ == '__main__':
 	ph = phase3()
 	#for line in ff:
 	#	print (line)
-	while ph.UT < 125 :
+	while ph.UT < 250 :
 		if len(ph.ebq) !=0 and ph.CH1_flag == False:
 			#print ('1')
 			ph.start_CH1()
